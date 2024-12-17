@@ -48,6 +48,8 @@ module RV32i_controlpath (
 
   logic [4:0] rd_add_dec_w, rd_add_exec_w, rd_add_mem_w, rd_add_wb_w;
 
+  logic branch_taken_r;
+
 
 
 
@@ -66,8 +68,8 @@ module RV32i_controlpath (
 
 
   
-  assign inst_dec_r =(stall_w == 1'b1) ? 32'h00000013 : instruction_i;
-
+  // assign inst_dec_r =(stall_w == 1'b1) ? 32'h00000013 : instruction_i;
+  assign inst_dec_r =(stall_w == 1'b1 || branch_taken_r == 1'b1) ? 32'h00000013 : instruction_i;
 
 
 
@@ -119,12 +121,17 @@ module RV32i_controlpath (
     endcase
   end
 
-
-
   always_ff @(posedge clk_i or negedge resetn_i) begin : exec_stage
     if (resetn_i == 1'b0) inst_exec_r <= 32'h0;
+    else if (branch_taken_w == 1'b1) inst_exec_r <= 32'h00000013;
     else inst_exec_r <= inst_dec_r;
   end
+
+  // always_ff @(posedge clk_i or negedge resetn_i) begin : exec_stage
+  //   if (resetn_i == 1'b0) inst_exec_r <= 32'h0;
+  //   else inst_exec_r <= inst_dec_r;
+  //   // else inst_exec_r <= (branch_taken_w) ? 32'h00000013 : inst_dec_r;
+  // end
   assign rd_add_exec_w = inst_exec_r[11:7];
 
 
@@ -373,8 +380,19 @@ module RV32i_controlpath (
 
 
   assign fetch_jump_o = (opcode_dec_w == RV32I_J_INSTR); //si on decode une instruction J on mets un nop en fin d'etage de fetch  
-  //assign fetch_jump_o = 1'b0;
+
 
   assign stall_o = stall_w;
+
+
+  // gestion des branch
+  
+  always_ff @(posedge clk_i or negedge resetn_i) begin : branch_taken_delay
+    if (resetn_i == 1'b0) branch_taken_r <= 1'h0;
+    else branch_taken_r <= branch_taken_w;
+  end
+
+
+
 
 endmodule

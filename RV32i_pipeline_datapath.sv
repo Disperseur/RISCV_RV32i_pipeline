@@ -117,10 +117,7 @@ module RV32i_datapath (
 
 
 
-
-  //assign inst_w = imem_data_i;
   assign inst_w = (fetch_jump_i == 1'b1) ? 32'h00000013 : imem_data_i;  //ici mettre le mux pilote par control path si decodage de J
-  //assign inst_w = (imem_data_i == RV32I_J_INSTR) ? 32'h00000013 : imem_data_i;
   assign opcode_w  = inst_w[6:0];
   assign func3_w =inst_w[14:12];
   assign rs1_add_w = inst_w[19:15];
